@@ -1,0 +1,195 @@
+---
+title: 'Topic Proposal'
+output: html_document
+date: "2023-03-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+I. Introduction
+
+Artificial Intelligence has made great strides in its adoption across multiple private and public sector use cases. While technologists and investors have continued to push for further development and deployment of automated systems, public opinion around AI is vastly polarized along many key categories such as one's race, age, class and gender. A common fear surrounds the public's mistrust in the abilities of an automated decision making tool to ensure fairness, justice and transparency in high-stakes decisions such as pre-trial detention or hiring.  
+
+In this project, I hope to explore the variation in public attitudes regarding the risk of AI having harmful consequences. I want to specifically look at how do attitudes change across race, gender, education or age, determine their support for or concerns with such technologies. 
+
+The data I'll be using to explore these questions come is stated below: 
+
+Zhang, Baobao; Dafoe, Allan, 2019, "Replication Data for: Artificial Intelligence: American Attitudes and Trends (January 9, 2019)", https://doi.org/10.7910/DVN/SGFRYA, Harvard Dataverse, V1, UNF:6:XASNQjh6L8LmDwZVrXw4Iw== [fileUNF]
+
+Specifically, the data comes from a report conducted by The Center for the Governance of AI at the University of Oxford. https://governanceai.github.io/US-Public-Opinion-Report-Jan-2019/
+
+They contracted their data collection out to YouGov, an organization which specializes in qualitative research and public opinion surveys. YouGov interviewed 2,387 respondents which was then matched down to 2,000 observations within their data set. The matching was done to based on a sample from the 2016 American Community Survey, accounting for representation of variables such as on gender, age, race and education. 
+
+The variables this data set looks at are many, but for the sake of my project, I will be considering the following variables: 
+
+1- "Q1_9": Likelihood of event globally in next 10 years - Harmful consequences of artificial intelligence
+
+
+2- "Q2_9": Size of negative impact if event occurred - Harmful consequences of artificial intelligence
+
+3- "educ": Education
+
+4- "gender": Gender
+
+5- "birthyr": Birth Year
+
+6- "race": Race
+
+
+
+
+```{r}
+#Load Packages
+library(tidyverse)
+library(tidytuesdayR) 
+library("haven") 
+library(dataReporter)
+```
+
+```{r}
+#Get data
+df0 <- read_sav("YALE0065_OUTPUT.sav")
+df1 = subset(df0, select = c(race, educ, birthyr, gender, Q1_9, Q2_9  ) )
+```
+```{r}
+#Make Codebook
+makeDataReport(df1, vol = "6")
+```
+
+
+II. Data analysis 
+
+A. Key Variables
+
+1- "Q1_9": Likelihood of event globally in next 10 years - Harmful consequences of artificial intelligence
+This variable measures the participant's opinion on the immediacy of harms that may come from AI
+The observations are as follows: 
+         Count Code Label
+        ----- ---- -----
+           65    1 Very unlikely   < 5%
+           92    2 Unlikely  5-20%
+           89    3 Somewhat unlikely  20-40%
+          115    4 Equally likely as unlikely  40-60%
+           65    5 Somewhat likely  60-80%
+           46    6 Likely  80-95%
+           45    7 Very likely   > 95%
+           56    8 I don't  know
+            0   98 skipped
+         1427   99 not asked
+
+2- "Q2_9": Size of negative impact if event occurred - Harmful consequences of artificial intelligence
+This variable measures the degree of harm that could come from AI.
+The observations are as follows: 
+
+        Count Code Label
+        ----- ---- -----
+           43    1 Minimal
+           79    2 Minor
+          160    3 Moderate
+          125    4 Severe
+           82    5 Catastrophic
+           84    6 I don't know
+            0    8 skipped
+         1427    9 not asked
+
+3- "educ": Education
+       Count Code Label
+        ----- ---- -----
+          125    1 No HS
+          617    2 High school graduate
+          422    3 Some college
+          223    4 2-year
+          392    5 4-year
+          221    6 Post-grad
+            0    8 skipped
+            0    9 not asked
+4- "gender": Gender
+        Count Code Label
+        ----- ---- -----
+          952    1 Male
+         1048    2 Female
+            0    8 skipped
+            0    9 not asked
+
+5- "birthyr": Birth Year
+This is simply the year of birth - as a numeric value. 
+
+6- "race": Race
+
+
+        Count Code Label
+        ----- ---- -----
+         1289    1 White
+          236    2 Black
+          310    3 Hispanic
+           75    4 Asian
+           15    5 Native American
+           43    6 Mixed
+           26    7 Other
+            6    8 Middle Eastern
+            0   98 skipped
+            0   99 not asked
+
+B. Preliminary Data Analysis 
+```{r}
+# Summary statistics for df1
+summary(df1)
+#Here I can see the range of observations for all the variables. For eg: race has 8 types of observations from 1-8, each denoting a specific race i.e. white or black, etc. 
+
+#However, when looking at the the actual prompts of Q1_9 and Q2_9, the observation of 9 denotes that the question was not asked to this group. I will need to filter these answers out as they do not necessarily mean a lot in terms of the individuals opinion. 
+
+#Beyond this, there appears to be variation in the data which is a good sign for analysis later on. 
+
+```
+
+```{r}
+#Plots 
+q19 <- df1 %>% 
+  ggplot(data=df1,mapping= aes(x= birthyr, y=Q1_9))+
+geom_jitter(alpha=0.8, size=1.3)+
+geom_smooth()
+
+q19 #Here we can see how we need to remove the 98 and 99 values as they do not help in viz. 
+
+df1b <- df1 %>% filter(Q1_9 < 98)
+
+q19b <- df1b %>% 
+  ggplot(data=df1b,mapping= aes(x= birthyr, y=Q1_9))+
+geom_jitter(alpha=0.8, size=1.3)+
+geom_smooth()
+
+q19b
+
+#Now the graph looks better. We see some relationship between age and fear of AI harms. 
+
+df1c <- df1 %>% filter(Q2_9 < 8)
+
+q29b <- df1c %>% 
+  ggplot(data=df1c,mapping= aes(x= birthyr, y=Q2_9))+
+geom_jitter(alpha=0.8, size=1.3)+
+geom_smooth()
+
+q29b #Removed the 9 and 8 values here too, so we got a better viz. 
+
+#Overall, I am seeing how different plots will be useful for the different variables i want to use. For eg. for the race one, I may have to opt for a bar plot. This can be fine tuned and improved on in the actual project. 
+```
+
+
+
+C. The method(s) that you believe will be useful in answering your question(s).
+
+For this project I think I will have to not only visualize the data appropriately based on the variables, but I have to see if there is a statistically significant relationship between AI acceptance and the different factors such as age, race, gender etc. The visualizations do not make this very clear but I will have to work around this in some way. 
+
+Therefore, I will need to use regression models as a statistical analysis method in this project. 
+
+D. What results from these specific statistical methods are needed to support your hypothesized answer?
+
+Currently I am not certain on my hypothesis but I have mutliple working ones: 
+
+h1- Non-white racial groups fear AI more due to the issue of racial bias in algorithms. 
+h2- Older generations fear AI more. 
+h3- More educated populations fear AI less. 
+h4- Women fear AI more than men. 
+
+To support these, I will need to find a statistically significant relationship between fear of AI seen in the q1_9 and q2_9 variables, and the various factors mentioned above in the hypotheses. 
