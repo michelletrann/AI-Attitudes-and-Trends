@@ -1,0 +1,298 @@
+---
+title: "Final"
+output: html_document
+date: "2023-04-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Load and Install Packages
+library(tidyverse)
+library(tidytuesdayR) 
+library(haven) 
+library(dataReporter)
+library(ggplot2)
+library(dplyr)
+library(gtsummary)
+library(gt)
+library(RSQLite)
+```
+Get Data and convert .sav to .csv
+```{r}
+#We started off initially with a .sav file for our data and needed to convert this below: 
+
+# Read the .sav file into df
+#df <- read_sav("YALE0065_OUTPUT.sav")
+
+# Save the df as an .rds file
+#saveRDS(df, "YALE0065_OUTPUT.rds")
+
+# Read the .rds file back into a data frame
+df0 <- readRDS("YALE0065_OUTPUT.rds")
+```
+Cleaning data
+```{r}
+df1 <- subset(df0, select = c(educ, gender, Q1_9, Q2_9) )
+df1 <- na.omit(df1)
+```
+
+Looking at the current data frame
+```{r}
+summary(df1)
+print(df1)
+```
+Cleaning the data
+```{r}
+# Remove observations that are: "I don't know", "skipped" or "not asked".  
+df1<- df1 %>% filter(Q1_9 < 98) %>% 
+  filter(Q2_9 < 6) %>% 
+  filter(educ < 7)
+```
+Wrangling the data
+```{r}
+# Make variables into numeric 
+
+df1$gender <- as.numeric(df1$gender)
+df1$educ <- as.numeric(df1$educ)
+df1$Q1_9 <- as.numeric(df1$Q1_9)
+df1$Q2_9 <- as.numeric(df1$Q2_9)
+```
+
+Recoding Variables 
+```{r}
+# Recode gender
+df1 <- df1 %>% 
+  mutate(gender = case_when(
+    gender == 1 ~ "Male",
+    gender == 2 ~ "Female",
+    TRUE ~ as.character(gender)  # Keep other values unchanged
+  ))
+
+
+# Recode Q1_9
+df1 <- df1 %>% 
+  mutate(Q1_9 = case_when(
+    Q1_9 == 1 ~ "Very Unlikely",
+    Q1_9 == 2 ~ "Unlikely",
+    Q1_9 == 3 ~ "Somewhat Unlikely",
+    Q1_9 == 4 ~ "Equally Likely as Unlikely",
+    Q1_9 == 5 ~ "Somewhat Likely",
+    Q1_9 == 6 ~ "Likely",
+    Q1_9 == 7 ~ "Very Likely"
+  ))
+
+# Recode Q2_9
+df1 <- df1 %>% 
+  mutate(Q2_9 = case_when(
+    Q2_9 == 1 ~ "Minimal",
+    Q2_9 == 2 ~ "Minor",
+    Q2_9 == 3 ~ "Moderate",
+    Q2_9 == 4 ~ "Severe",
+    Q2_9 == 5 ~ "Catastrophic"
+  ))
+
+# Recode educ
+df1 <- df1 %>% 
+  mutate(educ = case_when(
+    educ == 1 ~ "No HS",
+    educ == 2 ~ "HS Graduate",
+    educ == 3 ~ "Some College",
+    educ == 4 ~ "2-Year College",
+    educ == 5 ~ "4-Year College",
+    educ == 6 ~ "Post-Grad"
+  ))
+
+```
+But! We need a variable with numeric class for the y axis of the boxplot
+```{r}
+
+#Create new variables:
+
+df1$Q1numeric <- df1$Q1_9 
+df1$Q2numeric <- df1$Q2_9 
+
+
+# Recode new variable Q1numeric into this scale
+df1 <- df1 %>% 
+  mutate(Q1numeric = case_when(
+    Q1numeric == "Very Unlikely" ~ -3,
+    Q1numeric == "Unlikely" ~ -2,
+    Q1numeric == "Somewhat Unlikely" ~ -1,
+    Q1numeric == "Equally Likely as Unlikely" ~ 0,
+    Q1numeric == "Somewhat Likely" ~ 1,
+    Q1numeric == "Likely" ~ 2,
+    Q1numeric == "Very Likely" ~ 3
+  ))
+
+# Recode new variable Q2numeric into this scale
+df1 <- df1 %>% 
+  mutate(Q2numeric = case_when(
+    Q2numeric == "Minimal" ~ -2,
+    Q2numeric == "Minor" ~ -1,
+    Q2numeric == "Moderate" ~ 0,
+    Q2numeric == "Severe" ~ 1,
+    Q2numeric == "Catastrophic" ~ 2
+  ))
+
+#Making sure the new variables are numeric
+
+df1$Q1numeric <- as.numeric(df1$Q1numeric)
+df1$Q2numeric <- as.numeric(df1$Q2numeric)
+df1 <- na.omit(df1)
+```
+
+Summary Statistics
+```{r}
+## Using gtsummary for summary statistics
+
+df2 <- df1 %>% select(gender, educ, Q1_9, Q2_9)
+table1 <- tbl_summary(df2)
+gt_table1 <- as_gt(table1)
+
+#Incurred issue with this table displaying on html version. Fixing below:
+# Convert the gt_summary object to a data frame
+gt_table1_df <- as.data.frame(gt_table1)
+
+# Convert the data frame to a gt object
+gt_table1 <- gt(gt_table1_df)
+
+# Render the table and display it in the output
+gt_table1
+```
+
+Plotting 
+```{r}
+## Setting a theme: 
+
+theme_set(
+  theme_classic() +
+    theme(legend.position = "top")
+  )
+```
+Now we want to create a stacked bar plot to show the proportion of respondents at each education level and their corresponding preferences regarding the likelihood of AI harms within 10 years.
+```{r}
+## Q1_9: 
+
+#Create prop variable for Q1_9: proportion or percentage of respondents in each education level for different levels of fear of AI.
+Q1Prop <- df1 %>%
+  group_by(educ, Q1_9) %>%
+  summarise(count = n(), .groups = "keep") %>%
+  mutate(prop = count / sum(count)) 
+
+
+#Now to go on to the plotting of Q1_9 in stacked bar graph 
+
+#First reorder the education observations on x axis
+Q1Prop<- Q1Prop %>% 
+   mutate(educ = fct_relevel(educ, 
+            "No HS","HS Graduate","Some College","2-Year College","4-Year College", "Post-Grad")) 
+
+#Then reorder the legend
+
+Q1Prop$Q1_9 <- factor(Q1Prop$Q1_9, levels = c("Very Unlikely", "Unlikely", "Somewhat Unlikely", "Equally Likely as Unlikely", "Somewhat Likely", "Likely", "Very Likely"))
+
+#Then the actual plot for Q1_9
+plot1 <-ggplot(Q1Prop, aes(x = educ, y = prop, fill = factor(Q1_9))) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("Very Unlikely" = "#BDA0CB", "Unlikely" = "#A0CDD9",
+                                "Somewhat Unlikely" = "#C8D5B9", "Equally Likely as Unlikely" = "#EEDD7B", "Somewhat Likely"="#FFC777", "Likely"= "#FEBF99", "Very Likely"="#E6A9B1", "NA" = "grey68")) +
+  labs(title = "Education vs. Perceptions of Likelihood AI Harms within 10 Years",
+       x = "Education Level",
+       y = "Proportion", 
+        fill= "")
+plot1
+
+ggsave("plot1.png", height=6, width=8)
+
+```
+Moving onto the same for Q2_9:  We want to see the proportion of respondents at each education level and their corresponding preferences regarding the severity of AI harms
+```{r}
+#Create prop variable for Q2_9: proportion or percentage of respondents in each education level for different levels of fear of AI.
+Q2Prop <- df1 %>%
+  group_by(educ, Q2_9) %>%
+  summarise(count = n(), .groups = "keep") %>%
+  mutate(prop = count / sum(count))
+   
+
+#Also reorder the education observations for Q2Prop
+Q2Prop<- Q2Prop %>% 
+   mutate(educ = fct_relevel(educ, 
+            "No HS","HS Graduate","Some College","2-Year College","4-Year College", "Post-Grad")) 
+
+#Reorder the legend 
+
+Q2Prop$Q2_9 <- factor(Q2Prop$Q2_9, levels = c("Minimal", "Minor", "Moderate", "Severe", "Catastrophic"))
+
+#The actual plot for Q2_9
+plot2 <- ggplot(Q2Prop, aes(x = educ, y = prop, fill = factor(Q2_9))) +
+  geom_bar(stat = "identity", position = "stack") +
+ scale_fill_manual(values = c("Minimal" = "#BDA0CB", "Minor" = "#A0CDD9",
+                                "Moderate" = "#C8D5B9", "Severe" = "#EEDD7B", "Catastrophic"="#FFC777"))+
+  labs(title = "Education vs. Perceptions of Severity of AI Harms",
+       x = "Education Level",
+       y = "Proportion", 
+       fill= "")
+
+plot2
+ggsave("plot2.png", height=6, width=8)
+```
+
+Now we want to see how gender map onto this relationship using box plot. 
+Below is how gender maps pnto the relationship between education level and likelihood of AI harms within 10 years.
+```{r}
+
+#Reorder the educ variable
+df1 <- df1 %>% 
+   mutate(educ = fct_relevel(educ, 
+            "No HS","HS Graduate","Some College","2-Year College","4-Year College", "Post-Grad")) 
+
+#Create y axis values to better understand plot
+custom_y_labels <- c("Very Unlikely", "Unlikely", "Somewhat Unlikely", "Equally Likely as Unlikely", "Somewhat Likely", "Likely", "Very Likely")
+
+
+#Plot
+
+
+box1 <- ggplot(df1, aes(x = educ, y = Q1numeric, fill = gender)) +
+  stat_boxplot(geom = "errorbar")+
+  geom_boxplot() +
+  labs(title = "Education Level vs. Likelihood of AI Harms within 10 Years / Gender",
+       x = "Education Level",
+       y = "Likelihood of AI Harms within 10 Years",
+       fill = "Gender")+
+    scale_y_continuous(breaks = c(-3,-2,-1,0,1,2,3), labels = custom_y_labels)+
+  scale_fill_manual(values = c("Female" = "#BDA0CB", "Male" = "#A0CDD9"))+
+  theme(plot.title = element_text(hjust = 0.5))
+
+box1
+ggsave("box1.png", height=6, width=8)
+
+
+```
+We do the same for mapping gender onto the relationship between education level and severity of AI harms.
+```{r}
+#First need to create the labels for y axis values to better understand plot
+custom_y_labels2 <- c("Minimal", "Minor", "Moderate", "Severe", "Catastrophic")
+
+#Plot 
+
+box2 <- ggplot(df1, aes(x = educ, y = Q2numeric, fill = gender)) +
+  stat_boxplot(geom = "errorbar")+
+  geom_boxplot() +
+  labs(title = "Education Level vs. Severity of AI Harms / Gender",
+       x = "Education Level",
+       y = "Severity of AI Harms",
+       fill = "Gender")+
+   scale_y_continuous(breaks = c(-2,-1,0,1,2), labels = custom_y_labels2)+
+  scale_fill_manual(values = c("Female" = "#BDA0CB", "Male" = "#A0CDD9"))
+
+box2
+ggsave("box2.png", height=6, width=8)
+
+```
+
+
+
