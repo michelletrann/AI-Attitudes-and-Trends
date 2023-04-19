@@ -26,32 +26,43 @@ Zhang, Baobao and Allan Dafoe. "Artificial Intelligence: American Attitudes and 
 The source Rmd can be found here:
 ai_public_opinion_us_2018_report_dataverse.Rmd - File for "Artificial Intelligence: American Attitudes and Trends" (January 2019) Report Replication Files
 
+
 ---
 
 ## Research Question
 
-How does education level impact perceptions of AI harms?
-How do male and female respondents differentiate in their perceptions of AI harms?
-Do gendered responses change by education level?
+What is the relationship between education level and perceptions of AI harms?
+What is the relationship between gender, as an additional variable, education level and perceptions of AI harms?
 
 ---
 
 ## Methodology
 
-The ggplot2 package is used to create the box plots, and the gtsummary package is used to create the summary table. The box plots are used to visualize the distribution of two variables, Q1_9 (Likelihood of AI Harms) and Q2_9 (Severity of AI Harms), while the summary table provides an overview of the gender, education level, and two survey questions (Q1_9 and Q2_9).
-
-Given the explanatory dataset, utilizing box plots allow us to see the distribution of responses classified by education levels. For the purpose of our project, this was effective in visualizing variable tendencies specifically for gender. 
+1. We first developed our research question by looking at the available data and what interesting relationships we may want to investigate. 
+2. We then cleaned and wrangled the data to suit the needs of our project, including the creation of new data frames and variables.
+3. We decided that we would use a summary table, stacked bar plots and box plots to investigate the questions. 
+4. We used the gtsummary package to create the summary table and the ggplot2 package to create the stacked bar plot and box plots for our visualization and analysis. 
+5. The summary table provides important information regarding our selected variables and observations in the data set:  gender, education level, and two survey questions (Q1_9 and Q2_9). 
+6. The stacked bar plot is used to visualize the variation in perceptions of AI harms seen in variables Q1_9 (Likelihood of AI Harms) and Q2_9 (Severity of AI Harms), along different education levels. 
+7. The box plots are additionally used to map gender onto this variation, allowing us to see the distribution of responses grouped by education levels.
+8. We then conducted an analysis based on the visualizations we made to observe any relationships between our chosen variables. 
 
 --- 
 
 ## Findings
 
-In response to the likelihood of AI Harms, respondents perceive lower risk of AI harms within 10 years as education level increases.
+In response to the likelihood of AI Harms, respondents generally perceive lower risk of AI harms within 10 years as education level increased. With regards to the gender differences for the first prompt on the likelihood of AI harms, female respondents had a tighter range of neutral to somewhat unlikely answers than male respondents, but both genders found AI harms to be more unlikely as education levels increased.
 
-Respondents are less extreme about the severity of AI harms as education level increases. Therefore, they are more moderate in their disposition. 
+In response to the severity of AI Harms, respondents perceived the magnitude of harms more moderately as education increased, with lower levels of extreme opinions. Male respondents favored a more extreme disposition on the severity of AI harms in lower education levels (no HS, HS, some college, two-year college), dropping to a more moderate disposition as education levels increased to 4-year college and post-grad. Conversely, female respondents remained consistently moderate despite education levels with a slight favor toward a moderate to severe disposition as their education levels increased.
 
-Female respondents have a tighter range of neutral-somewhat unlikely answers than male respondents, but both genders found AI harms to be more unlikely as education levels increased.
+In short, as education levels increase, the perceived risk and severity of AI harms generally decreased across both genders. However, female respondents remain more consistent in their perceived risk of the likelihood of AI harms and severity. Males with lower education levels perceived greater severity in AI harms, followed by a more moderate disposition as education levels increased.
 
-Male respondents favored a more severe disposition in lower education levels (no HS, HS, some college, two-year college), dropping to a more moderate disposition as education levels increased to 4-year college and post-grad. Conversely, female respondents remained consistently moderate despite education levels with a slight favor toward a moderate-severe disposition as their education levels increased.
+---
 
-In short, as education levels increase, the perceived risk and severity of AI harms slightly decreases across both genders. However, female respondents remain more consistent in their perceived risk of AI harms and severity. Males with lower education levels perceived greater severity in AI harms, declining towards a moderate disposition as education levels increase.
+## Limitations
+
+Firstly, this data set had very limited survey prompts relating to artificial intelligence. The authors acknowledge that they were aiming for breadth over depth of the survey. In the future, it would be useful to conduct surveys that have more specific scenarios for AI use cases in order for respondents to truly understand the content of AI applications, and thus their potential harms. 
+
+We intended to measure age and race as variables as well initially. However, we opted against age as the relationship to education felt more relevant to measure correlations for perceptions of AI and we could not see any interesting observations from our preliminary data analysis. We also opted against race as a variable since the sample was not equally representative from different racial groups. This made it hard to observe any clear relationships and felt futile to draw findings from. A larger sample size and more racial variation of respondents to represent the groups in equal numbers, rather than their proportion as seen in the population, may help with this. 
+
+We also want to acknowledge that our data was limited to the binary classifications of male and female, which may not be representative of respondents whose gender identity was not provided as an option.
