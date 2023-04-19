@@ -1,9 +1,13 @@
-### 
+# README File for American AI Attitudes and Trends
+---
 title: "README File for American Attitudes Towards Artificial Intelligence"
 subtitle: |
-A Data Visualization Project
+  A Data Visualization Project
 date: "April 18th, 2023"
-authors: "By Meher Wadhawan & Michelle Tran"
+author:
+  - name: "By Meher Wadhawan & Michelle Tran"
+rmarkdown::render("README.Rmd")
+rmarkdown::render("README.Rmd", "html_document")
 ---
 
 ## Executive Summary
