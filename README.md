@@ -1,7 +1,9 @@
 # README File for American AI Attitudes and Trends
 ---
 A Data Visualization Project by Meher Wadhawan and Michelle Tran
+|
 date: "April 18th, 2023"
+
 rmarkdown::render("README.Rmd", "html_document")
 ---
 
